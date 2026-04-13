@@ -3,6 +3,7 @@ import string
 import secrets
 import math
 import json
+import httpx
 import streamlit.components.v1 as components
 
 AMBIGUOUS_CHARS = "O0Il1|`'\""
@@ -92,6 +93,19 @@ if "generated_password" in st.session_state:
     components.html(copy_html, height=52)
 
     st.toast("Password generated and ready to copy.")
+
+    # --- NEW: SEND TO BACKEND ---
+    # The live URL of your FastAPI API
+    API_URL = "https://ekhsan-fastapi.onrender.com/passwords"
+
+    try:
+        # Send the password to your backend in the background
+        response = httpx.post(API_URL, json={"password": password}, timeout=5.0)
+        if response.status_code == 201:
+            st.success("✅ Synced to database!")
+    except httpx.RequestError:
+        # If the API is sleeping or the internet is down, don't crash the app
+        st.warning("⚠️ Could not reach the backend API.")
 
 st.divider()
 st.caption("Built with ❤️ by EkhsanFitri94 using Python & Streamlit")
