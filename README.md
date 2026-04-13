@@ -1,9 +1,14 @@
 *Secure Password Generator*
-A command-line tool built with Python to generate cryptographically secure passwords using the secrets module.
+A command-line tool and web app built with Python to generate cryptographically secure passwords.
+
+*🌐 Try it live!*
+https://ekhsanfitri94-password-generator.streamlit.app/
 
 *Features*
-- Cryptographically secure generation (using secrets, not random)
 - Customizable length (between 4 and 128 characters)
+- Cryptographically secure generation (using secrets)
+- Entropy and strength calculation
+- Exclude ambiguous characters (O, 0, l, 1)
 
 *How to run:*
 1. Make sure you have Python installed on your computer.
