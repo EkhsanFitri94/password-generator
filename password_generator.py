@@ -5,13 +5,9 @@ MIN_LENGTH = 4
 MAX_LENGTH = 128
 
 
-def generate_password(length=12):
-    # Combine letters, numbers, and symbols
-    all_characters = string.ascii_letters + string.digits + string.punctuation
-
-    # Generate the password
-    password = "".join(secrets.choice(all_characters) for _ in range(length))
-
+def generate_password(length, char_pool):
+    # Generate the password using the specific pool we give it
+    password = "".join(secrets.choice(char_pool) for _ in range(length))
     return password
 
 
@@ -32,9 +28,20 @@ if __name__ == "__main__":
         if length < MIN_LENGTH or length > MAX_LENGTH:
             print(f"Error: Length must be between {MIN_LENGTH} and {MAX_LENGTH}.")
         else:
-            # Generate and print the password
-            new_password = generate_password(length)
-            print(f"\nYour secure password is: {new_password}")
+            difficulty = (
+                input("Choose difficulty (easy, medium, hard): ").strip().lower()
+            )
+
+            if difficulty == "easy":
+                pool = string.ascii_letters
+            elif difficulty == "medium":
+                pool = string.ascii_letters + string.digits
+            else:
+                # If they type "hard" or anything else, default to hard
+                pool = string.ascii_letters + string.digits + string.punctuation
+
+            new_password = generate_password(length, pool)
+            print(f"\nYour {difficulty} secure password is: {new_password}")
 
     except ValueError:
         print("Error: Please enter a valid number!")
