@@ -3,10 +3,27 @@ import string
 import secrets
 import math
 import json
+import os
 import httpx
 import streamlit.components.v1 as components
 
 AMBIGUOUS_CHARS = "O0Il1|`'\""
+
+
+def sync_password_to_backend(password):
+    backend_url = os.getenv("BACKEND_URL", "").strip()
+
+    if not backend_url:
+        return None
+
+    try:
+        response = httpx.post(backend_url, json={"password": password}, timeout=5.0)
+        if response.status_code in (200, 201):
+            return True
+
+        return False
+    except httpx.RequestError:
+        return False
 
 
 def remove_ambiguous_chars(char_pool):
@@ -73,6 +90,14 @@ if st.button("Generate Password", type="primary", use_container_width=True):
     password = "".join(secrets.choice(pool) for _ in range(length))
     st.session_state["generated_password"] = password
 
+    st.toast("Password generated and ready to copy.")
+
+    sync_result = sync_password_to_backend(password)
+    if sync_result is True:
+        st.success("✅ Synced to database!")
+    elif sync_result is False and os.getenv("BACKEND_URL", "").strip():
+        st.warning("⚠️ Could not reach the backend API.")
+
 if "generated_password" in st.session_state:
     password = st.session_state["generated_password"]
 
@@ -86,26 +111,12 @@ if "generated_password" in st.session_state:
     escaped_password = json.dumps(password)
     copy_html = f"""
     <button onclick='navigator.clipboard.writeText({escaped_password});'
-            style=\"width:100%;padding:0.6rem 0.9rem;border:1px solid #d0d0d0;border-radius:8px;cursor:pointer;\">
+            style=\"width:100%;padding:0.6rem 0.9rem;border:1px solid #d0d0d0;
+            border-radius:8px;cursor:pointer;\">
       Copy Password
     </button>
     """
     components.html(copy_html, height=52)
-
-    st.toast("Password generated and ready to copy.")
-
-    # --- NEW: SEND TO BACKEND ---
-    # The live URL of your FastAPI API
-    API_URL = "https://ekhsan-fastapi.onrender.com/passwords"
-
-    try:
-        # Send the password to your backend in the background
-        response = httpx.post(API_URL, json={"password": password}, timeout=5.0)
-        if response.status_code == 201:
-            st.success("✅ Synced to database!")
-    except httpx.RequestError:
-        # If the API is sleeping or the internet is down, don't crash the app
-        st.warning("⚠️ Could not reach the backend API.")
 
 st.divider()
 st.caption("Built with ❤️ by EkhsanFitri94 using Python & Streamlit")
