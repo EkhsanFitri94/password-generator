@@ -1,17 +1,21 @@
-*Secure Password Generator*
-A command-line tool and web app built with Python to generate cryptographically secure passwords.
+🔐 Secure Password Generator
 
-*🌐 Try it live!*
-https://ekhsanfitri94-password-generator.streamlit.app/
+🌐 Live Demo
+Try it out right now: https://ekhsanfitri94-password-generator.streamlit.app/
 
-*Features*
-- Customizable length (between 4 and 128 characters)
-- Cryptographically secure generation (using secrets)
-- Entropy and strength calculation
-- Exclude ambiguous characters (O, 0, l, 1)
+✨ Features
+- Cryptographically Secure: Uses Python's secrets module instead of random for true security.
+- Entropy Calculation: Dynamically calculates password strength in bits of entropy.
+- Customizable: Choose between Easy, Medium, and Hard difficulty levels.
+- Human Readable: Option to exclude ambiguous characters (O, 0, l, 1, etc.).
+- One-Click Copy: Built-in JavaScript copy button for easy use.
 
-*How to run:*
-1. Make sure you have Python installed on your computer.
-2. Open your terminal or command prompt.
-3. Navigate to this folder.
-4. Run: `python password_generator.py
+🛠️ How to run locally
+1. Clone the repository:
+git clone https://github.com/EkhsanFitri94/password-generator.git
+
+2. Install dependencies:
+pip install streamlit
+
+3. Run the app:
+streamlit run app.py
