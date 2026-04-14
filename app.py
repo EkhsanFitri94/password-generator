@@ -4,26 +4,121 @@ import secrets
 import math
 import json
 import os
+from urllib.parse import urlsplit, urlunsplit
+
 import httpx
 import streamlit.components.v1 as components
 
 AMBIGUOUS_CHARS = "O0Il1|`'\""
 
 
+def build_password_endpoint(backend_url):
+    parsed_url = urlsplit(backend_url)
+    path = parsed_url.path.rstrip("/")
+
+    if path.endswith("/passwords"):
+        endpoint_path = path
+    elif path in ("", "/"):
+        endpoint_path = "/passwords"
+    else:
+        endpoint_path = f"{path}/passwords"
+
+    return urlunsplit(
+        (
+            parsed_url.scheme,
+            parsed_url.netloc,
+            endpoint_path,
+            parsed_url.query,
+            parsed_url.fragment,
+        )
+    )
+
+
 def sync_password_to_backend(password):
     backend_url = os.getenv("BACKEND_URL", "").strip()
 
     if not backend_url:
-        return None
+        return {"state": "disabled", "message": "BACKEND_URL is not set."}
 
     try:
-        response = httpx.post(backend_url, json={"password": password}, timeout=5.0)
-        if response.status_code in (200, 201):
-            return True
+        endpoint_url = build_password_endpoint(backend_url)
+        response = httpx.post(
+            endpoint_url,
+            json={"password": password},
+            timeout=5.0,
+        )
+    except httpx.TimeoutException:
+        return {
+            "state": "error",
+            "message": "Request timed out while contacting backend.",
+        }
+    except httpx.RequestError as exc:
+        return {
+            "state": "error",
+            "message": (
+                "Network error while contacting backend "
+                f"({exc.__class__.__name__})."
+            ),
+        }
 
-        return False
-    except httpx.RequestError:
-        return False
+    if response.status_code in (200, 201):
+        return {"state": "ok", "message": "Password synced to backend."}
+
+    return {
+        "state": "error",
+        "message": f"Backend returned HTTP {response.status_code}.",
+    }
+
+
+def check_backend_connection():
+    backend_url = os.getenv("BACKEND_URL", "").strip()
+
+    if not backend_url:
+        return {"state": "disabled", "message": "BACKEND_URL is not set."}
+
+    endpoint_url = build_password_endpoint(backend_url)
+
+    try:
+        response = httpx.get(endpoint_url, timeout=5.0)
+    except httpx.TimeoutException:
+        return {
+            "state": "error",
+            "message": "Connection test timed out while contacting backend.",
+        }
+    except httpx.RequestError as exc:
+        return {
+            "state": "error",
+            "message": (
+                "Connection test failed "
+                f"({exc.__class__.__name__})."
+            ),
+        }
+
+    if response.status_code in (200, 201, 405):
+        return {
+            "state": "ok",
+            "message": (
+                f"Backend reachable at {endpoint_url} "
+                f"(HTTP {response.status_code})."
+            ),
+        }
+
+    if response.status_code == 404:
+        return {
+            "state": "warning",
+            "message": (
+                "Backend reachable, but endpoint not found: "
+                f"{endpoint_url}"
+            ),
+        }
+
+    return {
+        "state": "error",
+        "message": (
+            "Backend responded with unexpected status "
+            f"HTTP {response.status_code}."
+        ),
+    }
 
 
 def remove_ambiguous_chars(char_pool):
@@ -59,7 +154,11 @@ st.write("Generate cryptographically secure passwords instantly.")
 length = st.slider("Password Length", min_value=4, max_value=128, value=12)
 
 # Create a radio button for difficulty
-difficulty = st.radio("Difficulty Level", ("Easy", "Medium", "Hard"), horizontal=True)
+difficulty = st.radio(
+    "Difficulty Level",
+    ("Easy", "Medium", "Hard"),
+    horizontal=True,
+)
 
 # Optional filter for easier human readability
 exclude_ambiguous = st.checkbox(
@@ -84,6 +183,18 @@ if exclude_ambiguous:
 st.caption(f"Pool includes: *{description}*")
 st.caption(f"Pool size: {len(pool)} characters")
 
+if st.button("Test Backend Connection", use_container_width=True):
+    connection_result = check_backend_connection()
+
+    if connection_result["state"] == "ok":
+        st.success(f"✅ {connection_result['message']}")
+    elif connection_result["state"] == "warning":
+        st.warning(f"⚠️ {connection_result['message']}")
+    elif connection_result["state"] == "error":
+        st.error(f"❌ {connection_result['message']}")
+    else:
+        st.info(f"ℹ️ {connection_result['message']}")
+
 # --- GENERATE BUTTON ---
 if st.button("Generate Password", type="primary", use_container_width=True):
     # This is the exact same logic you wrote in your original file!
@@ -93,10 +204,10 @@ if st.button("Generate Password", type="primary", use_container_width=True):
     st.toast("Password generated and ready to copy.")
 
     sync_result = sync_password_to_backend(password)
-    if sync_result is True:
+    if sync_result["state"] == "ok":
         st.success("✅ Synced to database!")
-    elif sync_result is False and os.getenv("BACKEND_URL", "").strip():
-        st.warning("⚠️ Could not reach the backend API.")
+    elif sync_result["state"] == "error":
+        st.warning(f"⚠️ {sync_result['message']}")
 
 if "generated_password" in st.session_state:
     password = st.session_state["generated_password"]
@@ -120,3 +231,4 @@ if "generated_password" in st.session_state:
 
 st.divider()
 st.caption("Built with ❤️ by EkhsanFitri94 using Python & Streamlit")
+
