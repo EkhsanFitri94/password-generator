@@ -1,21 +1,79 @@
-🔐 Secure Password Generator
+# Password Generator
 
-🌐 Live Demo
-Try it out right now: https://ekhsanfitri94-password-generator.streamlit.app/
+A secure password generator built with Python and Streamlit. It includes a web app for generating strong passwords and a small CLI script for quick terminal use.
 
-✨ Features
-- Cryptographically Secure: Uses Python's secrets module instead of random for true security.
-- Entropy Calculation: Dynamically calculates password strength in bits of entropy.
-- Customizable: Choose between Easy, Medium, and Hard difficulty levels.
-- Human Readable: Option to exclude ambiguous characters (O, 0, l, 1, etc.).
-- One-Click Copy: Built-in JavaScript copy button for easy use.
+## Live Demo
 
-🛠️ How to run locally
-1. Clone the repository:
+https://ekhsanfitri94-password-generator.streamlit.app/
+
+## Features
+
+- Cryptographically secure password generation with Python's `secrets` module
+- Easy, medium, and hard password modes
+- Option to remove ambiguous characters such as `O`, `0`, `I`, `l`, and `1`
+- Entropy-based password strength estimate
+- One-click copy button in the web app
+- Optional backend sync for saving generated passwords
+
+## App Modes
+
+### Streamlit app
+
+The main interface is `app.py`. It lets you choose length, difficulty, and backend sync behavior.
+
+### CLI script
+
+`password_generator.py` is a terminal-based version for generating passwords without the web UI.
+
+## Local Setup
+
+1. Clone the repository.
+
+```bash
 git clone https://github.com/EkhsanFitri94/password-generator.git
+cd password-generator
+```
 
-2. Install dependencies:
-pip install streamlit
+2. Install dependencies.
 
-3. Run the app:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the Streamlit app.
+
+```bash
 streamlit run app.py
+```
+
+4. Or run the CLI version.
+
+```bash
+python password_generator.py
+```
+
+## Environment Variables
+
+- `BACKEND_URL`: optional API base URL used by the Streamlit app to sync generated passwords.
+
+Example:
+
+```bash
+BACKEND_URL=https://ekhsan-fastapi.onrender.com
+```
+
+## Project Structure
+
+```text
+.
+├── app.py
+├── password_generator.py
+├── README.md
+├── requirements.txt
+└── .devcontainer/
+```
+
+## Notes
+
+- The web app requires the backend URL only if you want password sync enabled.
+- The CLI version is useful for quick generation without a browser.
